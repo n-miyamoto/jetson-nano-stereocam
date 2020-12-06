@@ -95,7 +95,7 @@ def main():
         resized_img_right = cv2.resize(resultImg_right,(IMAGE_WIDTH//crit, IMAGE_HEIGHT//crit))
         cv2.imshow('undistorted img', resized_img_left)
         cv2.waitKey(0)
-        cv2.imshow('undistorted img', )
+        cv2.imshow('undistorted img', resized_img_right)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
