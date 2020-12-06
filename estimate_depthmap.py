@@ -2,15 +2,21 @@ import cv2
 import numpy as np
 import glob
 
-square_size = 2.2      # rect size [cm]
-pattern_size = (10, 7)
+GST_STR_L = 'nvarguscamerasrc sensor-id=0 \
+        ! video/x-raw(memory:NVMM), width=3280, height=2464, format=(string)NV12, framerate=(fraction)20/1 \
+        ! nvvidconv ! video/x-raw, width=(int)3280, height=(int)2464, format=(string)BGRx \
+        ! videoconvert \
+        ! appsink'
 
-pattern_points = np.zeros( (np.prod(pattern_size), 3), np.float32 )
-pattern_points[:,:2] = np.indices(pattern_size).T.reshape(-1, 2)
-pattern_points *= square_size
-objpoints = []
-imgpoints_left = []
-imgpoints_right = []
+GST_STR_R = 'nvarguscamerasrc sensor-id=1 \
+        ! video/x-raw(memory:NVMM), width=3280, height=2464, format=(string)NV12, framerate=(fraction)20/1 \
+        ! nvvidconv ! video/x-raw, width=(int)3280, height=(int)2464, format=(string)BGRx \
+        ! videoconvert \
+        ! appsink'
+
+
+crit = 5
+
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 IMAGE_WIDTH = 3280
@@ -46,9 +52,16 @@ def main():
     D1 = np.load(PATH + "D1.npy")
     D2 = np.load(PATH + "D2.npy")
 
+    print("A1 = \n", A1)
+    print("A2 = \n", A2)
+    print("D1 = \n", D1)
+    print("D2 = \n", D2)
+    print("R = \n", R)
+    print("T = \n", T)
+
     # rectify images
     flags = 0
-    alpha = 1
+    alpha = 0
     image_size = (IMAGE_HEIGHT, IMAGE_WIDTH)
     R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(
         A1, D1, A2, D2, image_size, R, T, flags, alpha, image_size)
@@ -59,33 +72,44 @@ def main():
     map1_r, map2_r = cv2.initUndistortRectifyMap(A2, D2, R2, P2, image_size, m1type)
 
     # load images
-    bgr_left = cv2.imread(image_left, cv2.IMREAD_COLOR)
-    bgr_right = cv2.imread(image_right, cv2.IMREAD_COLOR)
-    gray_left = cv2.cvtColor(bgr_left, cv2.COLOR_BGR2GRAY)
-    gray_right = cv2.cvtColor(bgr_right , cv2.COLOR_BGR2GRAY)
+    gray_left = cv2.cvtColor(image_left, cv2.COLOR_BGR2GRAY)
+    gray_right = cv2.cvtColor(image_right, cv2.COLOR_BGR2GRAY)
+
+    resized_left = cv2.resize(gray_left,(IMAGE_WIDTH//crit, IMAGE_HEIGHT//crit))
+    resized_right = cv2.resize(gray_right,(IMAGE_WIDTH//crit, IMAGE_HEIGHT//crit))
+    cv2.imshow('Rectified Left Target Image', resized_right)
+    cv2.waitKey(0)
+    cv2.imshow('Rectified Right Target Image', resized_right)
+    cv2.waitKey(0)
+
 
     # ReMap images
     interpolation = cv2.INTER_NEAREST
     rectified_image_left  = cv2.remap(gray_left,  map1_l, map2_l, interpolation)
     rectified_image_right = cv2.remap(gray_right, map1_r, map2_r, interpolation)
-    cv2.imshow('Rectified Left Target Image', rectified_image_left)
+    resized_left = cv2.resize(rectified_image_left,(IMAGE_WIDTH//crit, IMAGE_HEIGHT//crit))
+    resized_right = cv2.resize(rectified_image_right,(IMAGE_WIDTH//crit, IMAGE_HEIGHT//crit))
+    cv2.imshow('Rectified Left Target Image', resized_right)
     cv2.waitKey(0)
-    cv2.imshow('Rectified Right Target Image', rectified_image_right)
+    cv2.imshow('Rectified Right Target Image', resized_right)
     cv2.waitKey(0)
+
 
     # stereo block matching
     matcher = cv2.StereoBM_create(numDisparities = 256,blockSize = 15)
     disparity = matcher.compute(rectified_image_left, rectified_image_right)
     map = ( disparity - np.min(disparity) ) / ( np.max(disparity) - np.min(disparity) )
-    cv2.imshow('disparity', map)
+    resized_map = cv2.resize(map,(IMAGE_WIDTH//crit, IMAGE_HEIGHT//crit))
+    cv2.imshow('disparity', resized_map)
     cv2.waitKey(0)
 
-        # stereo semi global block matching
-        matcher = cv2.StereoSGBM_create(minDisparity = 10, numDisparities=256, blockSize=22)
-        disparity = matcher.compute(rectified_image_left, rectified_image_right)
-        map = ( disparity - np.min(disparity) ) / ( np.max(disparity) - np.min(disparity) )
-        cv2.imshow('disparity', map)
-        cv2.waitKey(0)
+    # stereo semi global block matching
+    matcher = cv2.StereoSGBM_create(minDisparity = 10, numDisparities=256, blockSize=22)
+    disparity = matcher.compute(rectified_image_left, rectified_image_right)
+    map = ( disparity - np.min(disparity) ) / ( np.max(disparity) - np.min(disparity) )
+    resized_map = cv2.resize(map,(IMAGE_WIDTH//crit, IMAGE_HEIGHT//crit))
+    cv2.imshow('disparity', resized_map)
+    cv2.waitKey(0)
 
     cv2.destroyAllWindows()
 
