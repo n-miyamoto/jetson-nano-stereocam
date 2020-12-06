@@ -51,11 +51,11 @@ def main():
             img_right = cv2.drawChessboardCorners(bgr_right, pattern_size, corners2_right,ret_right)
             resized_img_left  = cv2.resize(img_left, (IMAGE_WIDTH//crit, IMAGE_HEIGHT//crit))
             resized_img_right = cv2.resize(img_right,(IMAGE_WIDTH//crit, IMAGE_HEIGHT//crit))
-            cv2.imshow(image_left, resized_img_left)
-            cv2.waitKey(0)
-            cv2.imshow(image_right, resized_img_right)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            # cv2.imshow(image_left, resized_img_left)
+            # cv2.waitKey(0)
+            # cv2.imshow(image_right, resized_img_right)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
 
             imgpoints_left.append(corners_left.reshape(-1, 2))
             imgpoints_right.append(corners_right.reshape(-1, 2))
@@ -85,17 +85,18 @@ def main():
         np.save(PATH + "D2", D2)
 
     for i, image in enumerate(images_left):
-        img_left = cv2.imread(image)
-        img_right= cv2.imread(images_right[i])
+        img_left = cv2.imread(image)        
+        image_right = image.rstrip("_left.jpg") + "_right.jpg"
+        img_right= cv2.imread(image_right)
         resultImg_left  = cv2.undistort(img_left, A1, D1, None)
         resultImg_right = cv2.undistort(img_right, A2, D2, None)
 
         # show undistorted images 
         resized_img_left  = cv2.resize(resultImg_left, (IMAGE_WIDTH//crit, IMAGE_HEIGHT//crit))
         resized_img_right = cv2.resize(resultImg_right,(IMAGE_WIDTH//crit, IMAGE_HEIGHT//crit))
-        cv2.imshow('undistorted img', resized_img_left)
+        cv2.imshow('undistorted left img', resized_img_left)
         cv2.waitKey(0)
-        cv2.imshow('undistorted img', )
+        cv2.imshow('undistorted rightimg', resized_img_right )
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
