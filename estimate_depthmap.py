@@ -28,12 +28,12 @@ PATH = "./calib_image_stereo/"
 
 def show_result(im_l,im_r,disp):
     graph = plt.figure()
-    plt.rcParams["font.size"]=15
+    plt.rcParams["font.size"]=5
     # left image
-    plt.subplot(2,2,1),plt.imshow(bgr2rbg(im_l))
+    plt.subplot(2,2,1),plt.imshow((im_l))
     plt.title("Left Image")
     # right image
-    plt.subplot(2,2,2),plt.imshow(bgr2rbg(im_r))
+    plt.subplot(2,2,2),plt.imshow((im_r))
     plt.title("Right Image")
     # disparity
     plt.subplot(2,2,3),plt.imshow(disp,"gray")
